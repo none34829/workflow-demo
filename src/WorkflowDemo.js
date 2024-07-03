@@ -260,82 +260,242 @@ export default WorkflowBuilder;*/
 
 
 import React, { useState } from 'react';
-import { ArrowRight, Settings, PlayCircle, Clock, FileText, Book, Globe, HardDrive } from 'lucide-react';
-import { Icon } from '@iconify/react';
+import { Check, Edit2, PlusCircle, AlertCircle, FileText, Clipboard, Search, File, UserCheck } from 'lucide-react';
+
 const WorkflowDemo = () => {
-  const [showSettings, setShowSettings] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [editMode, setEditMode] = useState(false);
 
-  const steps = [
-    { name: 'Input', icon: <FileText /> },
-    { name: 'Process 1', icon: <Book /> },
-    { name: 'Process 2', icon: <Globe /> },
-    { name: 'Conditional Logic', icon: <HardDrive /> },
-  ];
+  const [steps, setSteps] = useState([
+    {
+      name: 'Case Intake',
+      icon: <Clipboard className="w-6 h-6" />,
+      content: [
+        { type: 'input', label: 'Client Name', value: '' },
+        { type: 'select', label: 'Case Type', value: '', options: ['Contract Dispute', 'Intellectual Property', 'Employment Law', 'Corporate Law'] },
+        { type: 'textarea', label: 'Case Summary', value: '' },
+      ]
+    },
+    {
+      name: 'Document Analysis',
+      icon: <FileText className="w-6 h-6" />,
+      content: [
+        { type: 'checkbox', label: 'Contract Review', value: false },
+        { type: 'checkbox', label: 'Legal Compliance Check', value: false },
+        { type: 'textarea', label: 'Document Analysis Notes', value: '' },
+      ]
+    },
+    {
+      name: 'Legal Research',
+      icon: <Search className="w-6 h-6" />,
+      content: [
+        { type: 'input', label: 'Research Topic', value: '' },
+        { type: 'select', label: 'Research Database', value: '', options: ['LexisNexis', 'Westlaw', 'HeinOnline'] },
+        { type: 'textarea', label: 'Research Findings', value: '' },
+      ]
+    },
+    {
+      name: 'Draft Document',
+      icon: <File className="w-6 h-6" />,
+      content: [
+        { type: 'select', label: 'Document Type', value: '', options: ['Contract', 'Legal Memo', 'Court Filing'] },
+        { type: 'textarea', label: 'Document Content', value: '' },
+        { type: 'checkbox', label: 'Ready for Review', value: false },
+      ]
+    },
+    {
+      name: 'Client Review',
+      icon: <UserCheck className="w-6 h-6" />,
+      content: [
+        { type: 'textarea', label: 'Client Feedback', value: '' },
+        { type: 'checkbox', label: 'Approved by Client', value: false },
+        { type: 'input', label: 'Next Steps', value: '' },
+      ]
+    }
+  ]);
 
-  const deliverables = [
-    { name: 'Deliverable 1', icon: <FileText /> },
-    { name: 'Deliverable 2', icon: <FileText /> },
-  ];
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      // Conditional logic
+      if (currentStep === 0 && steps[0].content[1].value === 'Contract Dispute') {
+        const newSteps = [...steps];
+        newSteps.splice(1, 0, {
+          name: 'Contract Analysis',
+          icon: <FileText className="w-6 h-6" />,
+          content: [
+            { type: 'input', label: 'Contract ID', value: '' },
+            { type: 'textarea', label: 'Key Contract Terms', value: '' },
+            { type: 'checkbox', label: 'Breach Identified', value: false },
+          ]
+        });
+        setSteps(newSteps);
+      }
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleReset = () => {
+    setCurrentStep(0);
+    setSteps(steps.map(step => ({
+      ...step,
+      content: step.content.map(item => ({ ...item, value: item.type === 'checkbox' ? false : '' }))
+    })));
+  };
+
+  const handleContentChange = (index, value) => {
+    const newSteps = [...steps];
+    newSteps[currentStep].content[index].value = value;
+    setSteps(newSteps);
+  };
+
+  const renderStepContent = () => {
+    return (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">{steps[currentStep].name}</h3>
+        {steps[currentStep].content.map((item, index) => (
+          <div key={index} className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">{item.label}</label>
+            {item.type === 'input' && (
+              <input
+                type="text"
+                value={item.value}
+                onChange={(e) => handleContentChange(index, e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50"
+                disabled={!editMode}
+              />
+            )}
+            {item.type === 'select' && (
+              <select
+                value={item.value}
+                onChange={(e) => handleContentChange(index, e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50"
+                disabled={!editMode}
+              >
+                <option value="">Select {item.label}</option>
+                {item.options.map((option, optionIndex) => (
+                  <option key={optionIndex} value={option}>{option}</option>
+                ))}
+              </select>
+            )}
+            {item.type === 'textarea' && (
+              <textarea
+                value={item.value}
+                onChange={(e) => handleContentChange(index, e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50"
+                rows="3"
+                disabled={!editMode}
+              ></textarea>
+            )}
+            {item.type === 'checkbox' && (
+              <input
+                type="checkbox"
+                checked={item.value}
+                onChange={(e) => handleContentChange(index, e.target.checked)}
+                className="mt-1 rounded border-gray-300 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50"
+                disabled={!editMode}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <div className="flex items-center justify-center mb-8">
+    <div className="p-8 max-w-4xl mx-auto bg-gradient-to-br from-gray-50 to-green-100 rounded-xl shadow-2xl">
+      <h1 className="text-3xl font-bold mb-8 text-center text-green-800">jhana.ai Legal Workflow</h1>
+      <div className="flex items-center justify-between mb-12">
         {steps.map((step, index) => (
-          <React.Fragment key={step.name}>
+          <React.Fragment key={index}>
             <div className="flex flex-col items-center">
-              <button 
-                className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
-                onClick={() => setShowSettings(true)}
+              <div
+                className={`w-12 h-12 rounded-full flex items-center justify-center border-4 ${
+                  index <= currentStep
+                    ? 'bg-green-600 border-green-700 text-white'
+                    : 'bg-white border-gray-300 text-gray-500'
+                } transition-all duration-300 ease-in-out`}
               >
-                {step.icon}
-              </button>
-              <span className="mt-2 text-sm">{step.name}</span>
+                {index < currentStep ? (
+                  <Check className="w-6 h-6" />
+                ) : (
+                  <span className="text-lg font-semibold">{step.icon}</span>
+                )}
+              </div>
+              <span
+                className={`mt-2 font-medium ${
+                  index <= currentStep ? 'text-green-800' : 'text-gray-500'
+                }`}
+              >
+                {step.name}
+              </span>
             </div>
-            {index < steps.length - 1 && <ArrowRight className="mx-4" />}
+            {index < steps.length - 1 && (
+              <div className="flex-1 h-1 bg-gray-300 mx-2">
+                <div
+                  className={`h-full bg-green-600 transition-all duration-300 ease-in-out ${
+                    index < currentStep ? 'w-full' : 'w-0'
+                  }`}
+                />
+              </div>
+            )}
           </React.Fragment>
         ))}
       </div>
-
-      <div className="flex items-center justify-center mb-8">
-        {deliverables.map((deliverable, index) => (
-          <div key={deliverable.name} className="flex flex-col items-center mx-4">
-            <button className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50">
-              {deliverable.icon}
-            </button>
-            <span className="mt-2 text-sm">{deliverable.name}</span>
-          </div>
-        ))}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        {renderStepContent()}
       </div>
-
-      <div className="flex justify-center space-x-4">
-        <button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-          Run Now
+      <div className="flex justify-between items-center">
+        <button
+          onClick={handlePrevious}
+          disabled={currentStep === 0}
+          className="px-6 py-2 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out"
+        >
+          Previous
         </button>
-        <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-          Run Later
-        </button>
-        <button className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
-          Set Trigger Event
-        </button>
-      </div>
-
-      {showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg">
-            <h2 className="text-xl font-bold mb-4">Step Settings</h2>
-            <div className="mb-4">
-              <label className="block mb-2">Date:</label>
-              <input type="date" className="border rounded px-2 py-1" />
-            </div>
-            <button 
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-              onClick={() => setShowSettings(false)}
-            >
-              Close
-            </button>
-          </div>
+        <div>
+          <button
+            onClick={() => setEditMode(!editMode)}
+            className="px-4 py-2 bg-yellow-500 text-white rounded-full shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 transition-all duration-300 ease-in-out mr-2"
+          >
+            <Edit2 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setSteps([...steps, { name: 'New Step', icon: <PlusCircle className="w-6 h-6" />, content: [] }])}
+            className="px-4 py-2 bg-green-500 text-white rounded-full shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50 transition-all duration-300 ease-in-out"
+          >
+            <PlusCircle className="w-5 h-5" />
+          </button>
         </div>
-      )}
+        {currentStep === steps.length - 1 ? (
+          <button
+            onClick={() => alert('Workflow completed!')}
+            className="px-6 py-2 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out"
+          >
+            Finish
+          </button>
+        ) : (
+          <button
+            onClick={handleNext}
+            className="px-6 py-2 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out"
+          >
+            Next
+          </button>
+        )}
+      </div>
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={handleReset}
+          className="px-4 py-2 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-50 transition-all duration-300 ease-in-out"
+        >
+          <AlertCircle className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   );
 };
